@@ -1,0 +1,26 @@
+{
+  "name": "roeth",
+  "version": "1.0.1",
+  "description": "Un bot pour l’instant",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://git@github.com/TheCrazyChicken/RoEth.git"
+  },
+  "author": "TheCrazyChicken",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/TheCrazyChicken/RoEth/issues"
+  },
+  "homepage": "https://github.com/TheCrazyChicken/RoEth#readme",
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "ffmpeg": "0.0.4",
+    "ffmpeg-binaries": "^4.0.0",
+    "opusscript": "0.0.7",
+    "ytdl-core": "^1.0.1"
+  }
+}
