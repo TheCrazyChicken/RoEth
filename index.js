@@ -35,8 +35,12 @@ client.on("message", async message => {
     } else if (message.content.startsWith(`${prefix}stop`)) {
         stop(message, serveurQueue);
         return;
-    } else {
-        message.reply("Vous devez entrer une commande valide!")
+    } else if (message.content.startsWith(`${prefix}kick`)) {
+        kick(message);
+        return;
+    } else if (message.content.startsWith(`${prefix}ban`)) {
+        ban(message);
+        return;
     }
 });
 
@@ -86,6 +90,52 @@ async function execute(message, serveurQueue) {
     }
 }
 
+function kick(message) {
+    if (!message.guild) return;
+    if (message.content.startsWith(`${prefix}kick`)) {
+        const utilisateur = message.mentions.users.first();
+        if (utilisateur) {
+            const membre = message.guild.member(utilisateur);
+            if (membre) {
+                membre.kick("Raison facultative à afficher dans les journaux d'audit").then(() => {
+                    message.reply(`${utilisateur.tag} a été kick`);
+                }).catch(erreur => {
+                    message.reply("Je ne peux pas kick l’utilisateur");
+                    console.error(erreur);
+                });
+            } else {
+                message.reply("Cet utilisateur n’est pas dans le salon;");
+            }
+        } else {
+            message.reply("Vous devez mentionnez l’utilisateur pour le kick!");
+        }
+    }
+}
+
+function ban(message) {
+    if (!message.guild) return;
+    if (message.content.startsWith(`${prefix}ban`)) {
+        const utilisateur = message.mentions.users.first();
+        if (utilisateur) {
+            const membre = message.guild.member(utilisateur);
+            if (membre) {
+                membre.ban({
+                    reason: "C’est pas bien!",
+                }).then(() => {
+                    message.reply(`${utilisateur.tag} a été banni`);
+                }).catch(err => {
+                    message.reply("L’utilisateur ne peut pas être banni!");
+                    console.error(err);
+                });
+            } else {
+                message.reply("Cet utilisateur n’est pas dans le salon;");
+            }
+        } else {
+            message.reply("Vous devez mentionnez l’utilisateur pour le ban!");
+        }
+    }
+}
+
 function skip(message, serveurQueue) {
     if (!message.member.voiceChannel) return message.reply("Vous devez être dans un salon vocal pour sauter la musique!");
     if (!serveurQueue) return message.reply("Il y a pas de chanson que je puisse sauter");
@@ -118,51 +168,5 @@ function play(guild, song) {
         });
     dispatcher.setVolumeLogarithmic(serveurQueue.volume / 5);
 }
-
-client.on("message", message => {
-    if (!message.guild) return;
-    if (message.content.startsWith(`${prefix}kick`)) {
-        const utilisateur = message.mentions.users.first();
-        if (utilisateur) {
-            const membre = message.guild.member(utilisateur);
-            if (membre) {
-                membre.kick("Raison facultative à afficher dans les journaux d'audit").then(() => {
-                    message.reply(`${utilisateur.tag} a été kick`);
-                }).catch(erreur => {
-                    message.reply("Je ne peux pas kick l’utilisateur");
-                    console.error(erreur);
-                });
-            } else {
-                message.reply("Cet utilisateur n’est pas dans le salon;");
-            }
-        } else {
-            message.reply("Vous devez mentionnez l’utilisateur pour le kick!");
-        }
-    }
-});
-
-client.on("message", message => {
-    if (!message.guild) return;
-    if (message.content.startsWith(`${prefix}ban`)) {
-        const utilisateur = message.mentions.users.first();
-        if (utilisateur) {
-            const membre = message.guild.member(utilisateur);
-            if (membre) {
-                membre.ban({
-                    reason: "C’est pas bien!",
-                }).then(() => {
-                    message.reply(`${utilisateur.tag} a été banni`);
-                }).catch(err => {
-                    message.reply("L’utilisateur ne peut pas être banni!");
-                    console.error(err);
-                });
-            } else {
-                message.reply("Cet utilisateur n’est pas dans le salon;");
-            }
-        } else {
-            message.reply("Vous devez mentionnez l’utilisateur pour le ban!");
-        }
-    }
-});
 
 client.login(token);
