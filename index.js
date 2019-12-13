@@ -35,11 +35,17 @@ client.on("message", async message => {
     } else if (message.content.startsWith(`${prefix}stop`)) {
         stop(message, serveurQueue);
         return;
+    } else if (message.content.startsWith(`${prefix}nowplaying`)) {
+        nowplaying(message, serveurQueue);
+        return;
     } else if (message.content.startsWith(`${prefix}kick`)) {
         kick(message);
         return;
     } else if (message.content.startsWith(`${prefix}ban`)) {
         ban(message);
+        return;
+    } else if (message.content.startsWith(`${prefix}help`)) {
+        help(message);
         return;
     }
 });
@@ -90,6 +96,45 @@ async function execute(message, serveurQueue) {
     }
 }
 
+
+function skip(message, serveurQueue) {
+    if (!message.member.voiceChannel) return message.reply("Vous devez être dans un salon vocal pour sauter la musique!");
+    if (!serveurQueue) return message.reply("Il y a pas de chanson que je puisse sauter");
+    serveurQueue.connection.dispatcher.end();
+}
+
+function stop(message, serveurQueue) {
+    if (!message.member.voiceChannel) return message.reply("Vous devez être dans un salon vocal pour stopper la musique!");
+    serveurQueue.songs = [];
+    serveurQueue.connection.dispatcher.end();
+}
+
+function play(guild, song) {
+    const serveurQueue = queue.get(guild.id);
+
+    if (!song) {
+        serveurQueue.voiceChannel.leave();
+        queue.delete(guild.id);
+        return;
+    }
+
+    const dispatcher = serveurQueue.connection.playStream(ytdl(song.url))
+        .on("end", () => {
+            console.log("Fin de la musique!");
+            serveurQueue.songs.shift();
+            play(guild, serveurQueue.songs[0]);
+        })
+        .on("error", erreur => {
+            console.error(erreur);
+        });
+    dispatcher.setVolumeLogarithmic(serveurQueue.volume / 5);
+}
+
+function nowplaying(message, serveurQueue) {
+    if (!serveurQueue) return message.channel.send("Aucune musique n’es jouer");
+    return message.channel.send(`Lecture en cours: ${serveurQueue.songs[0].title}`);
+}
+
 function kick(message) {
     if (!message.guild) return;
     if (message.content.startsWith(`${prefix}kick`)) {
@@ -136,37 +181,47 @@ function ban(message) {
     }
 }
 
-function skip(message, serveurQueue) {
-    if (!message.member.voiceChannel) return message.reply("Vous devez être dans un salon vocal pour sauter la musique!");
-    if (!serveurQueue) return message.reply("Il y a pas de chanson que je puisse sauter");
-    serveurQueue.connection.dispatcher.end();
-}
-
-function stop(message, serveurQueue) {
-    if (!message.member.voiceChannel) return message.reply("Vous devez être dans un salon vocal pour stopper la musique!");
-    serveurQueue.songs = [];
-    serveurQueue.connection.dispatcher.end();
-}
-
-function play(guild, song) {
-    const serveurQueue = queue.get(guild.id);
-
-    if (!song) {
-        serveurQueue.voiceChannel.leave();
-        queue.delete(guild.id);
-        return;
-    }
-
-    const dispatcher = serveurQueue.connection.playStream(ytdl(song.url))
-        .on("end", () => {
-            console.log("Fin de la musique!");
-            serveurQueue.songs.shift();
-            play(guild, serveurQueue.songs[0]);
-        })
-        .on("error", erreur => {
-            console.error(erreur);
-        });
-    dispatcher.setVolumeLogarithmic(serveurQueue.volume / 5);
+function help(message) {
+    message.channel.send({
+        embed: {
+            color: 0x11b4db,
+            title: "Les commandes de musique du bot",
+            fields: [
+                {
+                    name: 'play',
+                    value: "Permet de jouer de la musique en mettant un url youtube"
+                },
+                {
+                    name: 'skip',
+                    value: "Permet de sauter la musique qui passe si il y a une musique dans la file d’attente"
+                },
+                {
+                    name: 'stop',
+                    value: "Permet d’arrêter la musique"
+                },
+                {
+                    name: "nowplaying",
+                    value: "Affiche ce qui est jouer"
+                }
+            ],
+        }
+    });
+    message.channel.send({
+        embed: {
+            color: 0x11b4db,
+            title: "Les commandes pour les administrateurs",
+            fields: [
+                {
+                    name: "kick",
+                    value: "Permet de virer un membre du serveur"
+                },
+                {
+                    name: "ban",
+                    value: "Permet de bannir un membre du serveur"
+                }
+            ]
+        }
+    });
 }
 
 client.login(token);
