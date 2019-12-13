@@ -47,6 +47,11 @@ client.on("message", async message => {
     } else if (message.content.startsWith(`${prefix}help`)) {
         help(message);
         return;
+    } else if (message.content.startsWith(`${prefix}clear`)) {
+        clear(message)
+        return;
+    } else {
+        message.reply("Vous devez entrer une commande valide!")
     }
 });
 
@@ -222,6 +227,26 @@ function help(message) {
             ]
         }
     });
+}
+
+async function clear(message) {
+    const args = message.content.split(' ');
+		let deleteCount = 0;
+		try {
+			deleteCount = parseInt(args[1], 10);
+		} catch(err) {
+            return message.reply('Veuillez indiquer le nombre de messages à supprimer. (max 100)')
+		}
+        
+
+		if (!deleteCount || deleteCount < 2 || deleteCount > 100)
+			return message.reply('Veuillez choisir un nombre entre 2 et 100 de message à supprimer');
+
+		const fetched = await message.channel.fetchMessages({
+			limit: deleteCount,
+		});
+		message.channel.bulkDelete(fetched)
+			.catch(error => message.reply(`Je ne peux pas supprimer les messages car : ${error}`));
 }
 
 client.login(token);
