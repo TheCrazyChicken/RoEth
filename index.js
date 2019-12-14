@@ -1,12 +1,11 @@
 const Discord = require("discord.js");
-const {
-    prefix,
-    token,
-} = require("./config.json");
+const moment = require("moment")
 const ytdl = require("ytdl-core");
+const { prefix, token, ownerid } = require("./config.json")
 
 const client = new Discord.Client();
 const queue = new Map();
+
 
 client.once("ready", () => {
     console.log("Lancement du bot");
@@ -24,6 +23,7 @@ client.on("message", async message => {
     if (message.author.bot) return;
     if (!message.content.startsWith(prefix)) return;
 
+    let args = message.content.slice(prefix.length).trim().split(" ");
     const serveurQueue = queue.get(message.guild.id);
 
     if (message.content.startsWith(`${prefix}play`)) {
@@ -39,17 +39,26 @@ client.on("message", async message => {
         nowplaying(message, serveurQueue);
         return;
     } else if (message.content.startsWith(`${prefix}kick`)) {
-        kick(message);
+        kick(message)
         return;
     } else if (message.content.startsWith(`${prefix}ban`)) {
-        ban(message);
+        ban(message)
         return;
     } else if (message.content.startsWith(`${prefix}help`)) {
-        help(message);
+        help(message)
         return;
+    } else if (message.content.startsWith(`${prefix}stats`)) {
+        stats(message)
+        return; 
     } else if (message.content.startsWith(`${prefix}clear`)) {
         clear(message)
         return;
+    } else if (message.content.startsWith(`${prefix}shutdown`)) {
+        shutdown(message)
+        return;
+    } else if (message.content.startsWith(`${prefix}restart`)) {
+        restart(message)
+        return
     } else {
         message.reply("Vous devez entrer une commande valide!")
     }
@@ -100,7 +109,6 @@ async function execute(message, serveurQueue) {
         return message.channel.send(`${song.title} a été rajouté dans la queue`);
     }
 }
-
 
 function skip(message, serveurQueue) {
     if (!message.member.voiceChannel) return message.reply("Vous devez être dans un salon vocal pour sauter la musique!");
@@ -194,11 +202,11 @@ function help(message) {
             fields: [
                 {
                     name: 'play',
-                    value: "Permet de jouer de la musique en mettant un url youtube"
+                    value: "Permet de jouer de la musique en mettant un \n url youtube"
                 },
                 {
                     name: 'skip',
-                    value: "Permet de sauter la musique qui passe si il y a une musique dans la file d’attente"
+                    value: "Permet de sauter la musique qui passe si il \n y a une musique dans la file d’attente"
                 },
                 {
                     name: 'stop',
@@ -223,8 +231,55 @@ function help(message) {
                 {
                     name: "ban",
                     value: "Permet de bannir un membre du serveur"
+                },
+                {
+                    name: "clear",
+                    value: "Permet de supprimmer le nombre de message \n voulue"
+                },
+                {
+                    name: "shutdown",
+                    value: "Éteint le bot"
+                },
+                {
+                    name: "restart",
+                    value: "Redémarre le bot"
                 }
             ]
+        }
+    });
+}
+
+function stats(message) {
+    const membre = message.mentions.members.first() || message.member;
+
+    message.channel.send({
+        embed: {
+            color: 0x001fe2,
+            title: `Statistiques de l'utilisateur **${membre.user.username}**`,
+            thumbnail: {
+                url: membre.user.displayAvatarURL
+            },
+            fields: [
+                {
+                    name: 'ID :',
+                    value: membre.id 
+                },
+                {
+                    name: 'Crée le :',
+                    value: moment.utc(membre.user.createdAt).format("LL")
+                },
+                {
+                    name: 'Jeu :',
+                    value: membre.user.presence.game ? membre.user.presence.game.name : 'Aucun jeu'
+                },
+                {
+                    name: 'Rejoin le :',
+                    value: moment.utc(membre.joinedAt).format('LL')
+                }
+            ],
+            footer: {
+                text: `Informations de l'utilisateur ${membre.user.username}`
+            }
         }
     });
 }
@@ -235,12 +290,12 @@ async function clear(message) {
 		try {
 			deleteCount = parseInt(args[1], 10);
 		} catch(err) {
-            return message.reply('Veuillez indiquer le nombre de messages à supprimer. (max 100)')
+            return message.reply('Veuillez indiquer le nombre de messages à supprimer. (max 1000)')
 		}
         
 
-		if (!deleteCount || deleteCount < 2 || deleteCount > 100)
-			return message.reply('Veuillez choisir un nombre entre 2 et 100 de message à supprimer');
+		if (!deleteCount || deleteCount < 2 || deleteCount > 1000)
+			return message.reply('Veuillez choisir un nombre entre 2 et 1000 de message à supprimer');
 
 		const fetched = await message.channel.fetchMessages({
 			limit: deleteCount,
@@ -249,4 +304,23 @@ async function clear(message) {
 			.catch(error => message.reply(`Je ne peux pas supprimer les messages car : ${error}`));
 }
 
+function restart(message) {
+    if (message.author.id = ownerid) {
+        message.channel.send('Redémarage').then(m => {
+            client.destroy().then(() => {
+                client.login(token);
+            });
+        });
+    }
+}
+
+function shutdown(message) {
+    if (message.author.id = ownerid) {
+        message.channel.send("Le bot s’éteint...").then(m => {
+            client.destroy()
+        });
+    }
+}
+
 client.login(token);
+
